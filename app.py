@@ -124,9 +124,16 @@ with tab1:
             ax.plot(t + rotation, r_spiral * (1 + 0.03 * np.sin(d * t)), 
                     color=selected_cmap(s_step), linewidth=s["lw"]*0.4, alpha=s["alpha"]*0.5)
         
-        # 4. ЗОВНІШНЯ МЕЖА (Стать G + День d)
-        crown_mod = np.sin(d * t) if G == 1 else np.abs(np.sin(d * t))
-        r_border = (r_spiral.max() + 0.6 * global_scale) + (G * 0.4 * global_scale * crown_mod)
+       # 4. ЗОВНІШНЯ МЕЖА (Удосконалена геометрія контуру)
+        # p_val = 0.4 створює жорсткі кристалічні шипи (Чоловіча стать)
+        # p_val = 1.5 створює м'які органічні пелюстки (Жіноча стать)
+        p_val = 0.4 if G == 1 else 1.5
+        crown_mod = (np.abs(np.sin(d * t)))**p_val
+        
+        # Ми прибрали G з множника амплітуди, щоб контур завжди йшов назовні,
+        # але змінював свій математичний "характер" (гостроту).
+        r_border = (r_spiral.max() + 0.6 * global_scale) + (0.5 * global_scale * crown_mod)
+        
         ax.plot(t, r_border, color=selected_cmap(0.6), linewidth=s["lw"]*1.5, alpha=0.9)
         
         ax.set_ylim(0, r_border.max() * 1.1)
