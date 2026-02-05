@@ -31,9 +31,8 @@ with tab2:
     st.subheader("2. Центральне кільце")
     st.write("Кільце символізує базову опору особистості. Його радіус та ширина залежать від показника сну ($S$):")
     st.latex(r"r_{in} = \frac{S}{5} \cdot S_{global}")
-    st.latex(r"r_{out} = r_{in} + \left(\frac{S}{20} + 0.1\right) \cdot S_{global}")
-    st.write("Показник сну ($S$) одночасно визначає як дистанцію від центру (ексцентриситет), так і товщину (щільність) внутрішнього ресурсу.")
-    st.write("Математично це реалізовано через заповнення простору (`fill_between`) між двома концентричними колами.")
+    st.latex(r"r_{out} = r_{in} + (0.05 + 0.08 \cdot S) \cdot S_{global}")
+    st.write("Показник сну ($S$) тепер керує двома векторами: зміщенням кільця від центру та його фізичною товщиною (щільністю ресурсу).")
 
     # --- ПЕЛЮСТКИ ---
     st.subheader("3. Шар пелюсток")
@@ -109,9 +108,14 @@ with tab1:
         
         # 1. ЦЕНТРАЛЬНЕ КІЛЬЦЕ (Сон S)
         r_in = (S / 5) * global_scale
-        r_width = (S / 20 + 0.1) * global_scale 
-        r_out = r_in + r_width
+        r_thickness = (0.05 + S * 0.08) * global_scale 
+        r_out = r_in + r_thickness
+        
+        # Важливо: fill_between малює саме простір МІЖ r_in та r_out
         ax.fill_between(t, r_in, r_out, color=selected_cmap(0.9), alpha=s["f_alpha"] + 0.3)
+        
+        # Контурні лінії кільця
+        ax.plot(t, np.full_like(t, r_in), color='white', linewidth=0.3, alpha=0.3)
         ax.plot(t, np.full_like(t, r_out), color='white', linewidth=s["lw"]*0.5, alpha=s["alpha"])
 
         # 2. ПЕЛЮСТКИ (Впевненість E)
