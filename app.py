@@ -99,7 +99,7 @@ with tab1:
         selected_cmap = color_maps.get(eye_choice, cm.plasma)
         
         t = np.linspace(0, 2 * np.pi, 2000)
-        fig = plt.figure(figsize=(10, 10), facecolor='black')
+        fig = plt.figure(figsize=(6, 6), facecolor='black')
         ax = plt.subplot(111, projection='polar')
         ax.set_facecolor('black')
         
@@ -144,11 +144,17 @@ with tab1:
         return fig
 
     # Відображення
+    # Створюємо три колонки. 
+    # Числа [1, 2, 1] означають, що центральна колонка вдвічі ширша за бокові.
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+
+with col2: # Малюємо все тільки в центральній колонці
     fig = generate_mandala()
     st.pyplot(fig)
     
     # Кнопка завантаження
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", facecolor='black', dpi=300)
+    # DPI=300 залишає картинку чіткою при завантаженні, навіть якщо на екрані вона невелика
+    fig.savefig(buf, format="png", facecolor='black', dpi=300) 
     st.download_button(label="📥 Завантажити мандалу (PNG)", data=buf.getvalue(), 
                        file_name=f"mandala.png", mime="image/png")
