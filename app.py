@@ -30,7 +30,9 @@ with tab2:
     # --- ЦЕНТРАЛЬНЕ КІЛЬЦЕ ---
     st.subheader("2. Центральне кільце")
     st.write("Кільце символізує базову опору особистості. Його радіус та ширина залежать від показника сну ($S$):")
-    st.latex(r"r_{in} = \frac{S}{5} \cdot S_{global}, \quad r_{out} = r_{in} + 0.3 \cdot S_{global}")
+    st.latex(r"r_{in} = \frac{S}{5} \cdot S_{global}")
+    st.latex(r"r_{out} = r_{in} + \left(\frac{S}{20} + 0.1\right) \cdot S_{global}")
+    st.write("Показник сну ($S$) одночасно визначає як дистанцію від центру (ексцентриситет), так і товщину (щільність) внутрішнього ресурсу.")
     st.write("Математично це реалізовано через заповнення простору (`fill_between`) між двома концентричними колами.")
 
     # --- ПЕЛЮСТКИ ---
@@ -107,7 +109,8 @@ with tab1:
         
         # 1. ЦЕНТРАЛЬНЕ КІЛЬЦЕ (Сон S)
         r_in = (S / 5) * global_scale
-        r_out = r_in + 0.3 * global_scale
+        r_width = (S / 20 + 0.1) * global_scale 
+        r_out = r_in + r_width
         ax.fill_between(t, r_in, r_out, color=selected_cmap(0.9), alpha=s["f_alpha"] + 0.3)
         ax.plot(t, np.full_like(t, r_out), color='white', linewidth=s["lw"]*0.5, alpha=s["alpha"])
 
