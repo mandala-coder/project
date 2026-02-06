@@ -143,4 +143,28 @@ with tab1:
         p_val = 0.4 if G == 1 else 1.5
         crown_mod = (np.abs(np.sin(d * t)))**p_val
         r_border = (r_spiral.max() + 0.6 * global_scale) + (0.5 * global_scale * crown_mod)
-        ax.plot(t, r_border, color=selected_cmap(
+        ax.plot(t, r_border, color=selected_cmap(0.6), linewidth=s["lw"]*1.5, alpha=0.9)
+        
+        # --- ФІКСАЦІЯ КАМЕРИ ---
+        # Встановлюємо жорстку межу 1.4. 
+        # При H=220 радіус мандали буде близько 1.3, тому вона ідеально впишеться.
+        # При H=100 радіус буде близько 0.6, тому вона буде виглядати маленькою в центрі.
+        ax.set_ylim(0, 1.4)
+        ax.set_axis_off()
+        
+        return fig
+
+    # Відображення
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+
+    with col2:
+        fig = generate_mandala()
+        st.pyplot(fig)
+        
+        # Кнопка завантаження
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", facecolor='black', dpi=300)
+        st.download_button(label="📥 Завантажити мандалу (PNG)", data=buf.getvalue(), 
+                           file_name=f"mandala.png", mime="image/png")
+
+
