@@ -3,13 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import io
-import time
 
 # 1. НАЛАШТУВАННЯ СТОРІНКИ
 st.set_page_config(page_title="Мандала особистості", layout="wide")
 
 st.title("🎨 Цифрова мандала особистості")
-st.write("### Математично-мистецький проєкт. Візуалізація персональних даних")
+st.write("### Математично-містецький проєкт. Візуалізація персональних даних")
 st.markdown("---")
 
 # 2. ВКЛАДКИ
@@ -87,16 +86,8 @@ with tab1:
                                     format_func=lambda x: {1:"Блакитні", 2:"Зелені", 3:"Карі", 4:"Янтарні"}[x])
 
     # ГРАФІЧНА ЛОГІКА
-    def generate_mandala(phase=0, quality='high'):
-        # ОПТИМІЗАЦІЯ ДЛЯ РУХУ
-        # Якщо режим низької якості (для руху), малюємо менше точок
-        if quality == 'low':
-            num_points = 500  # Менше точок = швидше
-            alpha_mult = 0.8
-        else:
-            num_points = 2500 # Ідеальна якість
-            alpha_mult = 1.0
-
+    def generate_mandala():
+        # Диференціація стилів темпераменту
         style_map = {
             "Сангвінік": {"lw": 2.0, "alpha": 0.8, "ls": "-", "f_alpha": 0.4},
             "Холерик":   {"lw": 4.0, "alpha": 1.0, "ls": "-", "f_alpha": 0.6},
@@ -108,70 +99,69 @@ with tab1:
         color_maps = {1: cm.winter, 2: cm.summer, 3: cm.autumn, 4: cm.spring}
         selected_cmap = color_maps.get(eye_choice, cm.plasma)
         
-        t = np.linspace(0, 2 * np.pi, num_points)
-        
+        t = np.linspace(0, 2 * np.pi, 2000)
         fig = plt.figure(figsize=(6, 6), facecolor='black')
         ax = plt.subplot(111, projection='polar')
         ax.set_facecolor('black')
         
         global_scale = 1 / (H/100 + S/5 + 6)
         
-        # 1. ЦЕНТРАЛЬНЕ КІЛЬЦЕ
+        # 1. ЦЕНТРАЛЬНЕ КІЛЬЦЕ (Сон S)
         r_in = (S / 5) * global_scale
         r_thickness = (0.05 + S * 0.08) * global_scale 
         r_out = r_in + r_thickness
         
-        ax.fill_between(t, r_in, r_out, color=selected_cmap(0.9), alpha=(s["f_alpha"] + 0.3) * alpha_mult)
-        ax.plot(t, np.full_like(t, r_in), color='white', linewidth=0.3, alpha=0.3 * alpha_mult)
-        ax.plot(t, np.full_like(t, r_out), color='white', linewidth=s["lw"]*0.5, alpha=s["alpha"] * alpha_mult)
+        # Важливо: fill_between малює саме простір МІЖ r_in та r_out
+        ax.fill_between(t, r_in, r_out, color=selected_cmap(0.9), alpha=s["f_alpha"] + 0.3)
+        
+        # Контурні лінії кільця
+        ax.plot(t, np.full_like(t, r_in), color='white', linewidth=0.3, alpha=0.3)
+        ax.plot(t, np.full_like(t, r_out), color='white', linewidth=s["lw"]*0.5, alpha=s["alpha"])
 
-        # 2. ПЕЛЮСТКИ
+        # 2. ПЕЛЮСТКИ (Впевненість E)
         e_val = (11 - E) / 2
         r_rose_base = r_out + 0.4 * global_scale
         r_rose = r_rose_base + (np.abs(np.cos(n/2 * t)))**e_val * 2.5 * global_scale
-        ax.fill(t, r_rose, color=selected_cmap(0.3), alpha=s["f_alpha"] * alpha_mult)
+        ax.fill(t, r_rose, color=selected_cmap(0.3), alpha=s["f_alpha"])
         ax.plot(t, r_rose, color=selected_cmap(0.2), linewidth=s["lw"], linestyle=s["ls"])
         
-        # 3. ПОЛЕ СПІРАЛЕЙ (Тут додається рух + phase)
+        # 3. ПОЛЕ СПІРАЛЕЙ (Енегрія T + Стать G)
         max_r_rose = r_rose.max()
-        # Якщо анімація - обмежуємо кількість шарів, щоб не гальмувало
-        layers = min(A, 40) if quality == 'low' else A
-        
-        for i in range(1, layers + 1):
+        for i in range(1, A + 1):
             s_step = i / A
-            # ОСЬ ТУТ ВІДБУВАЄТЬСЯ МАГІЯ РУХУ
-            rotation = G * i * (T / 10) * (np.pi / 2.5) + phase
+            rotation = G * i * (T / 10) * (np.pi / 2.5)
             r_spiral = max_r_rose + s_step * 3.5 * global_scale
             ax.plot(t + rotation, r_spiral * (1 + 0.03 * np.sin(d * t)), 
-                    color=selected_cmap(s_step), linewidth=s["lw"]*0.4, alpha=s["alpha"]*0.5 * alpha_mult)
+                    color=selected_cmap(s_step), linewidth=s["lw"]*0.4, alpha=s["alpha"]*0.5)
         
-        # 4. ЗОВНІШНЯ МЕЖА
+       # 4. ЗОВНІШНЯ МЕЖА (Удосконалена геометрія контуру)
+        # p_val = 0.4 створює жорсткі кристалічні шипи (Чоловіча стать)
+        # p_val = 1.5 створює м'які органічні пелюстки (Жіноча стать)
         p_val = 0.4 if G == 1 else 1.5
         crown_mod = (np.abs(np.sin(d * t)))**p_val
+        
+        # Ми прибрали G з множника амплітуди, щоб контур завжди йшов назовні,
+        # але змінював свій математичний "характер" (гостроту).
         r_border = (r_spiral.max() + 0.6 * global_scale) + (0.5 * global_scale * crown_mod)
-        ax.plot(t, r_border, color=selected_cmap(0.6), linewidth=s["lw"]*1.5, alpha=0.9 * alpha_mult)
+        
+        ax.plot(t, r_border, color=selected_cmap(0.6), linewidth=s["lw"]*1.5, alpha=0.9)
         
         ax.set_ylim(0, r_border.max() * 1.1)
         ax.set_axis_off()
-        
         return fig
 
     # Відображення
+    # Створюємо три колонки. 
+    # Числа [1, 2, 1] означають, що центральна колонка вдвічі ширша за бокові.
     col1, col2, col3 = st.columns([1, 2, 1]) 
 
-    with col2:
-        animate = st.checkbox("✨ Активувати рух")
-        
-        # Створюємо контейнер для мандали
-        plot_placeholder = st.empty()
-        
-        if animate:
-            phase = 0
-            while animate:
-                # Генеруємо мандалу в "легкому" режимі
-                fig = generate_mandala(phase=phase, quality='low')
-                
-                # ХИТРІСТЬ: Перетворюємо графік на картинку в пам'яті
-                # Це працює набагато швидше і плавніше, ніж st.pyplot
-                buf_frame = io.BytesIO()
-                fig.savefig
+with col2: # Малюємо все тільки в центральній колонці
+    fig = generate_mandala()
+    st.pyplot(fig)
+    
+    # Кнопка завантаження
+    buf = io.BytesIO()
+    # DPI=300 залишає картинку чіткою при завантаженні, навіть якщо на екрані вона невелика
+    fig.savefig(buf, format="png", facecolor='black', dpi=300) 
+    st.download_button(label="📥 Завантажити мандалу (PNG)", data=buf.getvalue(), 
+                       file_name=f"mandala.png", mime="image/png")
