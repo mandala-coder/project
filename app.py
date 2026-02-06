@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import io
-import time  # <--- ДОДАНО ДЛЯ АНІМАЦІЇ
+import time
 
 # 1. НАЛАШТУВАННЯ СТОРІНКИ
 st.set_page_config(page_title="Мандала особистості", layout="wide")
@@ -87,9 +87,16 @@ with tab1:
                                     format_func=lambda x: {1:"Блакитні", 2:"Зелені", 3:"Карі", 4:"Янтарні"}[x])
 
     # ГРАФІЧНА ЛОГІКА
-    # Додали параметр phase для анімації
-    def generate_mandala(phase=0):
-        # Диференціація стилів темпераменту
+    # Додали параметр quality для оптимізації швидкості
+    def generate_mandala(phase=0, quality='high'):
+        # ОПТИМІЗАЦІЯ: Зменшуємо кількість точок, якщо якість 'low' (для анімації)
+        if quality == 'low':
+            num_points = 500  # Швидкий режим (достатньо для ока в русі)
+            alpha_mult = 0.7  # Трохи прозоріше для швидкості
+        else:
+            num_points = 2500 # Висока якість для друку
+            alpha_mult = 1.0
+
         style_map = {
             "Сангвінік": {"lw": 2.0, "alpha": 0.8, "ls": "-", "f_alpha": 0.4},
             "Холерик":   {"lw": 4.0, "alpha": 1.0, "ls": "-", "f_alpha": 0.6},
@@ -101,83 +108,86 @@ with tab1:
         color_maps = {1: cm.winter, 2: cm.summer, 3: cm.autumn, 4: cm.spring}
         selected_cmap = color_maps.get(eye_choice, cm.plasma)
         
-        t = np.linspace(0, 2 * np.pi, 2000)
+        t = np.linspace(0, 2 * np.pi, num_points)
+        
+        # Створюємо фігуру
         fig = plt.figure(figsize=(6, 6), facecolor='black')
         ax = plt.subplot(111, projection='polar')
         ax.set_facecolor('black')
         
         global_scale = 1 / (H/100 + S/5 + 6)
         
-        # 1. ЦЕНТРАЛЬНЕ КІЛЬЦЕ (Сон S)
+        # 1. ЦЕНТРАЛЬНЕ КІЛЬЦЕ
         r_in = (S / 5) * global_scale
         r_thickness = (0.05 + S * 0.08) * global_scale 
         r_out = r_in + r_thickness
         
-        # Важливо: fill_between малює саме простір МІЖ r_in та r_out
-        ax.fill_between(t, r_in, r_out, color=selected_cmap(0.9), alpha=s["f_alpha"] + 0.3)
-        
-        # Контурні лінії кільця
-        ax.plot(t, np.full_like(t, r_in), color='white', linewidth=0.3, alpha=0.3)
-        ax.plot(t, np.full_like(t, r_out), color='white', linewidth=s["lw"]*0.5, alpha=s["alpha"])
+        ax.fill_between(t, r_in, r_out, color=selected_cmap(0.9), alpha=(s["f_alpha"] + 0.3) * alpha_mult)
+        ax.plot(t, np.full_like(t, r_in), color='white', linewidth=0.3, alpha=0.3 * alpha_mult)
+        ax.plot(t, np.full_like(t, r_out), color='white', linewidth=s["lw"]*0.5, alpha=s["alpha"] * alpha_mult)
 
-        # 2. ПЕЛЮСТКИ (Впевненість E)
+        # 2. ПЕЛЮСТКИ
         e_val = (11 - E) / 2
         r_rose_base = r_out + 0.4 * global_scale
         r_rose = r_rose_base + (np.abs(np.cos(n/2 * t)))**e_val * 2.5 * global_scale
-        ax.fill(t, r_rose, color=selected_cmap(0.3), alpha=s["f_alpha"])
+        ax.fill(t, r_rose, color=selected_cmap(0.3), alpha=s["f_alpha"] * alpha_mult)
         ax.plot(t, r_rose, color=selected_cmap(0.2), linewidth=s["lw"], linestyle=s["ls"])
         
-        # 3. ПОЛЕ СПІРАЛЕЙ (Енегрія T + Стать G)
+        # 3. ПОЛЕ СПІРАЛЕЙ
         max_r_rose = r_rose.max()
-        for i in range(1, A + 1):
+        # ОПТИМІЗАЦІЯ: Якщо анімація, малюємо трохи менше шарів, якщо вік дуже великий
+        layers = A if quality == 'high' else min(A, 30) 
+        
+        for i in range(1, layers + 1):
             s_step = i / A
-            # ДОДАЛИ PHASE ДЛЯ РУХУ
             rotation = G * i * (T / 10) * (np.pi / 2.5) + phase
             r_spiral = max_r_rose + s_step * 3.5 * global_scale
             ax.plot(t + rotation, r_spiral * (1 + 0.03 * np.sin(d * t)), 
-                    color=selected_cmap(s_step), linewidth=s["lw"]*0.4, alpha=s["alpha"]*0.5)
+                    color=selected_cmap(s_step), linewidth=s["lw"]*0.4, alpha=s["alpha"]*0.5 * alpha_mult)
         
-        # 4. ЗОВНІШНЯ МЕЖА (Удосконалена геометрія контуру)
+        # 4. ЗОВНІШНЯ МЕЖА
         p_val = 0.4 if G == 1 else 1.5
         crown_mod = (np.abs(np.sin(d * t)))**p_val
-        
         r_border = (r_spiral.max() + 0.6 * global_scale) + (0.5 * global_scale * crown_mod)
-        
-        ax.plot(t, r_border, color=selected_cmap(0.6), linewidth=s["lw"]*1.5, alpha=0.9)
+        ax.plot(t, r_border, color=selected_cmap(0.6), linewidth=s["lw"]*1.5, alpha=0.9 * alpha_mult)
         
         ax.set_ylim(0, r_border.max() * 1.1)
         ax.set_axis_off()
+        
+        # Примусово закриваємо фігуру при поверненні, щоб очистити пам'ять пізніше,
+        # але тут повертаємо об'єкт для відмальовки
         return fig
 
     # Відображення
-    # Створюємо три колонки. 
-    # Числа [1, 2, 1] означають, що центральна колонка вдвічі ширша за бокові.
     col1, col2, col3 = st.columns([1, 2, 1]) 
 
-    with col2: # Малюємо все тільки в центральній колонці
-        # Додаємо перемикач для анімації
+    with col2:
         animate = st.checkbox("✨ Активувати рух")
-        
-        # Створюємо місце для малюнка
         plot_placeholder = st.empty()
         
         if animate:
-            # Цикл анімації
             phase = 0
+            # Використовуємо st.empty() для плавної заміни кадру
             while animate:
-                fig = generate_mandala(phase=phase)
+                # Викликаємо з quality='low' для швидкості
+                fig = generate_mandala(phase=phase, quality='low')
                 plot_placeholder.pyplot(fig)
-                phase += 0.1  # Швидкість обертання
-                time.sleep(0.05) # Пауза між кадрами
-                plt.close(fig) # Очищення пам'яті
+                
+                # КРИТИЧНО ВАЖЛИВО: Очищення пам'яті Matplotlib
+                plt.close(fig) 
+                
+                phase += 0.1
+                time.sleep(0.01) # Менша затримка, бо малюємо швидше
         else:
-            # Статичне відображення
-            fig = generate_mandala(phase=0)
+            # Статичне відображення у високій якості
+            fig = generate_mandala(phase=0, quality='high')
             plot_placeholder.pyplot(fig)
         
-        # Кнопка завантаження
+        # Кнопка завантаження (генеруємо окремо у високій якості для файлу)
         buf = io.BytesIO()
-        # Зберігаємо останній згенерований fig
-        fig.savefig(buf, format="png", facecolor='black', dpi=300) 
+        fig_save = generate_mandala(phase=0, quality='high') # Завжди зберігаємо High Quality
+        fig_save.savefig(buf, format="png", facecolor='black', dpi=300)
+        plt.close(fig_save) # Прибираємо за собою
+        
         st.download_button(label="📥 Завантажити мандалу (PNG)", data=buf.getvalue(), 
                            file_name=f"mandala.png", mime="image/png")
