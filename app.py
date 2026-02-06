@@ -133,4 +133,54 @@ with tab1:
         r_out = r_in + r_thickness
         
         ax.fill_between(t, r_in, r_out, color=selected_cmap(0.9), alpha=(s["f_alpha"] + 0.3))
-        ax.plot(t, np.full_like(t, r_in),
+        ax.plot(t, np.full_like(t, r_in), color='white', linewidth=0.3, alpha=0.3)
+        ax.plot(t, np.full_like(t, r_out), color='white', linewidth=s["lw"]*0.5, alpha=s["alpha"])
+
+        # 2. ПЕЛЮСТКИ
+        e_val = (11 - E) / 2
+        r_rose_base = r_out + 0.4 * global_scale
+        r_rose = r_rose_base + (np.abs(np.cos(n/2 * t)))**e_val * 2.5 * global_scale
+        ax.fill(t, r_rose, color=selected_cmap(0.3), alpha=s["f_alpha"])
+        ax.plot(t, r_rose, color=selected_cmap(0.2), linewidth=s["lw"], linestyle=s["ls"])
+        
+        # 3. ПОЛЕ СПІРАЛЕЙ
+        max_r_rose = r_rose.max()
+        for i in range(1, A + 1):
+            s_step = i / A
+            rotation = G * i * (T / 10) * (np.pi / 2.5)
+            r_spiral = max_r_rose + s_step * 3.5 * global_scale
+            ax.plot(t + rotation, r_spiral * (1 + 0.03 * np.sin(d * t)), 
+                    color=selected_cmap(s_step), linewidth=s["lw"]*0.4, alpha=s["alpha"]*0.5)
+        
+        # 4. ЗОВНІШНЯ МЕЖА
+        p_val = 0.4 if G == 1 else 1.5
+        crown_mod = (np.abs(np.sin(d * t)))**p_val
+        r_border = (r_spiral.max() + 0.6 * global_scale) + (0.5 * global_scale * crown_mod)
+        ax.plot(t, r_border, color=selected_cmap(0.6), linewidth=s["lw"]*1.5, alpha=0.9)
+        
+        # 5. СЕКТОРИ (КОНТРАСТНІ)
+        if show_sectors:
+            max_radius = r_border.max()
+            for i in range(n):
+                angle = (2 * np.pi / n) * i
+                # Використовуємо contrast_color і збільшену товщину (2.0)
+                # alpha=0.9 робить лінії яскравими
+                ax.plot([angle, angle], [r_out, max_radius], color=sector_color, linewidth=2.0, alpha=0.9, linestyle='-')
+
+        ax.set_ylim(0, r_border.max() * 1.1)
+        ax.set_axis_off()
+        
+        return fig
+
+    # Відображення
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+
+    with col2:
+        fig = generate_mandala()
+        st.pyplot(fig)
+        
+        # Кнопка завантаження
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", facecolor='black', dpi=300)
+        st.download_button(label="📥 Завантажити мандалу (PNG)", data=buf.getvalue(), 
+                           file_name=f"mandala.png", mime="image/png")
