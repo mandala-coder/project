@@ -58,8 +58,8 @@ with tab2:
     # --- СЕКТОРИ (НОВЕ) ---
     st.subheader("6. Секторальна сітка")
     st.write("Мандала розбивається на сектори, кількість яких відповідає Місяцю народження ($n$).")
-    st.latex(r"\theta_{sector} = \frac{2\pi}{n} \cdot k, \quad k \in [1..n]")
-    st.write("Це створює ритмічну структуру, що впорядковує хаос спіралей.")
+    st.latex(r"\theta_{sector} = \frac{2\pi}{n} \cdot k")
+    st.write("Лінії секторів виконуються контрастним (комплементарним) кольором для створення чіткої системи координат.")
 
     # --- ТЕМПЕРАМЕНТ ---
     st.subheader("7. Графічна інтерпретація темпераменту")
@@ -86,7 +86,6 @@ with tab1:
         T = st.slider("Енергія", 0, 10, 5, help="Змінює ЗАКРУЧЕНІСТЬ спіралі.")
         
         st.markdown("---")
-        # Додаємо вимикач для секторів
         show_sectors = st.checkbox("🌐 Показати сектори", value=True)
         
         G = st.radio("Стать", options=[1, -1], format_func=lambda x: "Чоловіча" if x == 1 else "Жіноча")
@@ -107,7 +106,19 @@ with tab1:
         color_maps = {1: cm.winter, 2: cm.summer, 3: cm.autumn, 4: cm.spring}
         selected_cmap = color_maps.get(eye_choice, cm.plasma)
         
-        # Висока якість для статики (2500 точок)
+        # ВИЗНАЧЕННЯ КОНТРАСТНОГО КОЛЬОРУ ДЛЯ СЕКТОРІВ
+        # 1-Блакитні (Зима) -> Золотий
+        # 2-Зелені (Літо) -> Маджента
+        # 3-Карі (Осінь) -> Ціан
+        # 4-Янтарні (Весна) -> Фіолетовий
+        contrast_colors = {
+            1: '#FFD700', # Gold
+            2: '#FF00FF', # Magenta
+            3: '#00FFFF', # Cyan
+            4: '#9400D3'  # Dark Violet
+        }
+        sector_color = contrast_colors.get(eye_choice, 'white')
+        
         t = np.linspace(0, 2 * np.pi, 2500)
         
         fig = plt.figure(figsize=(6, 6), facecolor='black')
@@ -122,55 +133,4 @@ with tab1:
         r_out = r_in + r_thickness
         
         ax.fill_between(t, r_in, r_out, color=selected_cmap(0.9), alpha=(s["f_alpha"] + 0.3))
-        ax.plot(t, np.full_like(t, r_in), color='white', linewidth=0.3, alpha=0.3)
-        ax.plot(t, np.full_like(t, r_out), color='white', linewidth=s["lw"]*0.5, alpha=s["alpha"])
-
-        # 2. ПЕЛЮСТКИ
-        e_val = (11 - E) / 2
-        r_rose_base = r_out + 0.4 * global_scale
-        r_rose = r_rose_base + (np.abs(np.cos(n/2 * t)))**e_val * 2.5 * global_scale
-        ax.fill(t, r_rose, color=selected_cmap(0.3), alpha=s["f_alpha"])
-        ax.plot(t, r_rose, color=selected_cmap(0.2), linewidth=s["lw"], linestyle=s["ls"])
-        
-        # 3. ПОЛЕ СПІРАЛЕЙ
-        max_r_rose = r_rose.max()
-        for i in range(1, A + 1):
-            s_step = i / A
-            rotation = G * i * (T / 10) * (np.pi / 2.5)
-            r_spiral = max_r_rose + s_step * 3.5 * global_scale
-            ax.plot(t + rotation, r_spiral * (1 + 0.03 * np.sin(d * t)), 
-                    color=selected_cmap(s_step), linewidth=s["lw"]*0.4, alpha=s["alpha"]*0.5)
-        
-        # 4. ЗОВНІШНЯ МЕЖА
-        p_val = 0.4 if G == 1 else 1.5
-        crown_mod = (np.abs(np.sin(d * t)))**p_val
-        r_border = (r_spiral.max() + 0.6 * global_scale) + (0.5 * global_scale * crown_mod)
-        ax.plot(t, r_border, color=selected_cmap(0.6), linewidth=s["lw"]*1.5, alpha=0.9)
-        
-        # 5. СЕКТОРИ (Нова функція)
-        if show_sectors:
-            max_radius = r_border.max()
-            # Малюємо лінії через кожні (360 / n) градусів
-            for i in range(n):
-                angle = (2 * np.pi / n) * i
-                # Лінія йде від зовнішнього краю кільця (r_out) до краю мандали
-                ax.plot([angle, angle], [r_out, max_radius], color='white', linewidth=0.8, alpha=0.4, linestyle='--')
-
-        ax.set_ylim(0, r_border.max() * 1.1)
-        ax.set_axis_off()
-        
-        return fig
-
-    # Відображення
-    col1, col2, col3 = st.columns([1, 2, 1]) 
-
-    with col2:
-        # Статичне відображення без анімації
-        fig = generate_mandala()
-        st.pyplot(fig)
-        
-        # Кнопка завантаження
-        buf = io.BytesIO()
-        fig.savefig(buf, format="png", facecolor='black', dpi=300)
-        st.download_button(label="📥 Завантажити мандалу (PNG)", data=buf.getvalue(), 
-                           file_name=f"mandala.png", mime="image/png")
+        ax.plot(t, np.full_like(t, r_in),
