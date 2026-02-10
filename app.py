@@ -110,7 +110,7 @@ with tab1:
         selected_cmap = {1: cm.winter, 2: cm.summer, 3: cm.autumn, 4: cm.spring}.get(eye_choice, cm.plasma)
         
         t = np.linspace(0, 2 * np.pi, 5000)
-        fig = plt.figure(figsize=(8, 8), facecolor='black')
+        fig = plt.figure(figsize=(10, 10), facecolor='black') # <--- ЗБІЛЬШИЛИ РОЗМІР ПОЛОТНА (8->10)
         ax = plt.subplot(111, projection='polar')
         ax.set_facecolor('black')
         
@@ -121,7 +121,7 @@ with tab1:
         breath = 1.0 + 0.05 * np.sin(phase)
         
         # === 1. ЯДРО (СОН S) ===
-        R_core = 2.0 * SCALE * breath  # Ядро дихає
+        R_core = 2.0 * SCALE * breath
         r_hole = R_core * max(0.0, 1 - (S / 12.0))
         
         ax.fill_between(t, r_hole, R_core, color=selected_cmap(0.9), alpha=s["alpha"])
@@ -148,7 +148,7 @@ with tab1:
         # Радіальні промені
         num_rays = int(T * 4) + 4
         for i in range(num_rays):
-            angle = (2 * np.pi / num_rays) * i + (phase / 50) # Сітка теж трохи крутиться
+            angle = (2 * np.pi / num_rays) * i + (phase / 50) 
             ax.plot([angle, angle], [max_r_rose, r_grid_end], 
                     color=selected_cmap(0.6), 
                     linewidth=s["lw"] * 0.6, 
@@ -173,14 +173,13 @@ with tab1:
         sizes = []
 
         for i in range(1, A + 1):
-            theta = i * golden_angle * G + (phase / 100) # Точки ледь зміщуються
+            theta = i * golden_angle * G + (phase / 100)
             r = max_r_rose + spacing * np.sqrt(i) * 3.5
             
             points_theta.append(theta)
             points_r.append(r)
             colors.append(selected_cmap(i / A))
             
-            # Розмір точок залежить від Енергії та Темпераменту
             base_size = 30 + (T * 8) 
             sizes.append(base_size * (s["lw"] * 0.8)) 
 
@@ -195,16 +194,17 @@ with tab1:
         
         p_shape = 0.5 if G == 1 else 1.5
         crown = (np.abs(np.sin(border_freq * t)))**p_shape
-        # Межа дихає разом з ядром
         r_border = r_border_base + (0.8 * SCALE * crown * breath)
         
         ax.plot(t, r_border, color=selected_cmap(0.9), 
                 linewidth=s["lw"] * 1.5,
                 alpha=s["alpha"])
 
-        # Фіксація (ВАЖЛИВО: фіксуємо осі, щоб малюнок не стрибав при анімації)
-        ax.set_ylim(0, 3.5)
+        # Фіксація (ЗУМ: БУЛО 3.5 -> СТАЛО 1.5)
+        # Це "наближає" камеру в 2.5 рази
+        ax.set_ylim(0, 1.5)
         ax.set_axis_off()
+        
         return fig
 
     # ВІДОБРАЖЕННЯ
@@ -227,11 +227,11 @@ with tab1:
         placeholder = st.empty()
         
         if run_anim:
-            # Цикл анімації (обмежений 200 кадрами для безпеки браузера)
+            # Цикл анімації
             for i in range(200):
                 fig = generate_mandala(phase=i * 0.2)
                 placeholder.pyplot(fig)
-                plt.close(fig) # Очищення пам'яті
+                plt.close(fig) 
                 time.sleep(0.05)
         else:
             # Статичний режим
