@@ -1,4 +1,3 @@
-
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
@@ -162,4 +161,35 @@ with tab1:
             # Додаємо вібрацію (синусоїда високої частоти)
             r_spiral = r_base + energy_vibro * np.sin(25 * t)
             
-            ax.plot(t + rotation, r_spiral,
+            ax.plot(t + rotation, r_spiral, 
+                    color=selected_cmap(s_step), linewidth=s["lw"]*0.4, alpha=s["alpha"]*0.6)
+
+        # === 5. ЗОВНІШНЯ МЕЖА (ЗРІСТ H, СТАТЬ G) ===
+        # Кількість вершин = Зріст / 10 (наприклад, 17)
+        border_freq = int(H / 10) 
+        
+        r_border_base = max_r_rose + 3.5 * SCALE
+        
+        # Форма шипів залежить від СТАТІ (G)
+        # Чоловіки (1) = 0.5 (гострі), Жінки (-1) = 1.5 (округлі)
+        p_val = 0.5 if G == 1 else 1.5 
+        
+        crown_shape = (np.abs(np.sin(border_freq * t)))**p_val 
+        r_border = r_border_base + (1.0 * SCALE * crown_shape)
+        
+        ax.plot(t, r_border, color=selected_cmap(0.8), linewidth=s["lw"]*1.5, alpha=0.9)
+
+        # Фіксація (завжди однаковий масштаб)
+        ax.set_ylim(0, 1.45) 
+        ax.set_axis_off()
+        return fig
+
+    # ВІДОБРАЖЕННЯ
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+    with col2:
+        fig = generate_mandala()
+        st.pyplot(fig)
+        
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", facecolor='black', dpi=300)
+        st.download_button("📥 Завантажити PNG", buf.getvalue(), "mandala.png", "image/png")
