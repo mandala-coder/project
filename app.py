@@ -89,4 +89,89 @@ with tab1:
         s = style_map[temp]
         
         color_maps = {1: cm.winter, 2: cm.summer, 3: cm.autumn, 4: cm.spring}
-        selected_cmap = color_maps.get(eye_choice
+        selected_cmap = color_maps.get(eye_choice, cm.plasma)
+        
+        t = np.linspace(0, 2 * np.pi, 2500)
+        fig = plt.figure(figsize=(6, 6), facecolor='black')
+        ax = plt.subplot(111, projection='polar')
+        ax.set_facecolor('black')
+        
+        # === 1. ГЛОБАЛЬНИЙ МАСШТАБ (ФІКСОВАНИЙ) ===
+        # Щоб мандали були однакові великі, фіксуємо коефіцієнт.
+        # Раніше він був ~0.11 (при середніх даних).
+        FIXED_SCALE = 0.12 
+
+        # === 2. ЦЕНТРАЛЬНЕ ЯДРО (СОН S - НОВА ЛОГІКА) ===
+        # Зовнішній радіус ядра фіксований
+        R_core_max = 2.0 * FIXED_SCALE 
+        
+        # Радіус дірки (hole). 
+        # Якщо S=12 -> дірка = 0. Якщо S=0 -> дірка майже повна.
+        hole_ratio = 1 - (S / 12.0)
+        hole_ratio = max(0.0, min(0.9, hole_ratio))
+        r_hole = R_core_max * hole_ratio
+
+        # Малюємо ядро (fill_between)
+        ax.fill_between(t, r_hole, R_core_max, color=selected_cmap(0.9), alpha=s["f_alpha"] + 0.3)
+        # Контури
+        ax.plot(t, np.full_like(t, r_hole), color='white', linewidth=0.5, alpha=0.5) # Внутрішній край
+        
+        # === 3. ЕПІТРОХОЇДА (ЗРІСТ H - ПОВЕРНУЛИ) ===
+        # Це проміжний шар між ядром і пелюстками
+        # Кількість кутів залежить від зросту
+        k_epi = int(H / 10) # 170 см -> 17 вершин
+        
+        # Вона трохи більша за ядро
+        r_epi_base = R_core_max + 0.2 * FIXED_SCALE
+        r_epi = r_epi_base + 0.3 * FIXED_SCALE * np.cos(k_epi * t)
+        
+        ax.plot(t, r_epi, color=selected_cmap(0.6), linewidth=s["lw"]*0.8, alpha=0.7)
+        
+        # === 4. ПЕЛЮСТКИ (РЕШТА БЕЗ ЗМІН) ===
+        # Починаємо малювати пелюстки відразу за епітрохоїдою
+        # Знаходимо макс. радіус епітрохоїди, щоб не накладалося
+        r_start_petals = r_epi_base + 0.4 * FIXED_SCALE
+        
+        e_val = (11 - E) / 2
+        # Формула з твого коду, але з фіксованим масштабом
+        r_rose = r_start_petals + (np.abs(np.cos(n/2 * t)))**e_val * 2.5 * FIXED_SCALE
+        
+        ax.fill(t, r_rose, color=selected_cmap(0.3), alpha=s["f_alpha"])
+        ax.plot(t, r_rose, color=selected_cmap(0.2), linewidth=s["lw"], linestyle=s["ls"])
+        
+        # === 5. ПОЛЕ СПІРАЛЕЙ (РЕШТА БЕЗ ЗМІН) ===
+        max_r_rose = r_rose.max()
+        for i in range(1, A + 1):
+            s_step = i / A
+            rotation = G * i * (T / 10) * (np.pi / 2.5)
+            # Твій оригінальний код спіралей
+            r_spiral = max_r_rose + s_step * 3.5 * FIXED_SCALE
+            ax.plot(t + rotation, r_spiral * (1 + 0.03 * np.sin(d * t)), 
+                    color=selected_cmap(s_step), linewidth=s["lw"]*0.4, alpha=s["alpha"]*0.5)
+        
+        # === 6. ЗОВНІШНЯ МЕЖА (РЕШТА БЕЗ ЗМІН) ===
+        p_val = 0.4 if G == 1 else 1.5
+        crown_mod = (np.abs(np.sin(d * t)))**p_val
+        
+        # Твій оригінальний код межі
+        r_border = (r_spiral.max() + 0.6 * FIXED_SCALE) + (0.5 * FIXED_SCALE * crown_mod)
+        
+        ax.plot(t, r_border, color=selected_cmap(0.6), linewidth=s["lw"]*1.5, alpha=0.9)
+        
+        # Фіксуємо камеру (щоб всі мандали були однакові великі)
+        ax.set_ylim(0, 1.3) # Підібрано під FIXED_SCALE = 0.12
+        ax.set_axis_off()
+        return fig
+
+    # Відображення
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+
+    with col2:
+        fig = generate_mandala()
+        st.pyplot(fig)
+        
+        # Кнопка завантаження
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", facecolor='black', dpi=300)
+        st.download_button(label="📥 Завантажити мандалу (PNG)", data=buf.getvalue(), 
+                           file_name=f"mandala.png", mime="image/png")
