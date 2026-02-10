@@ -1,3 +1,4 @@
+
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
@@ -95,3 +96,66 @@ with tab1:
         
         ax.fill_between(t, r_hole, R_core, color=selected_cmap(0.9), alpha=s["f_alpha"] + 0.3)
         ax.plot(t, np.full_like(t, r_hole), color='white', linewidth=0.5, alpha=0.5)
+
+        # === 2. ВНУТРІШНЯ ЗІРКА (ДЕНЬ НАРОДЖЕННЯ d) ===
+        R_layer2_base = R_core + 0.3 * SCALE
+        # d = частота
+        r_layer2 = R_layer2_base + 0.3 * SCALE * np.cos(d * t)
+        
+        ax.plot(t, r_layer2, color=selected_cmap(0.7), linewidth=s["lw"]*0.8, alpha=0.8)
+        ax.fill_between(t, R_core, r_layer2, color=selected_cmap(0.5), alpha=0.2)
+
+        # === 3. ОСНОВНІ ПЕЛЮСТКИ (МІСЯЦЬ n, ВПЕВНЕНІСТЬ E) ===
+        R_rose_base = R_layer2_base + 0.5 * SCALE
+        e_val = (11 - E) / 2
+        r_rose = R_rose_base + (np.abs(np.cos(n/2 * t)))**e_val * 2.5 * SCALE
+        
+        ax.fill(t, r_rose, color=selected_cmap(0.3), alpha=s["f_alpha"])
+        ax.plot(t, r_rose, color=selected_cmap(0.2), linewidth=s["lw"], linestyle=s["ls"])
+
+        # === 4. СПІРАЛІ (ВІК A, ЕНЕРГІЯ T) ===
+        max_r_rose = r_rose.max()
+        # Енергія додає вібрацію (синусоїду високої частоти)
+        energy_vibro = (T / 10.0) * 0.15 * SCALE 
+        
+        for i in range(1, A + 1):
+            s_step = i / A
+            rotation = G * i * 0.1
+            r_base = max_r_rose + s_step * 3.0 * SCALE
+            
+            # r + вібрація
+            r_spiral = r_base + energy_vibro * np.sin(25 * t)
+            
+            ax.plot(t + rotation, r_spiral, 
+                    color=selected_cmap(s_step), linewidth=s["lw"]*0.4, alpha=s["alpha"]*0.6)
+
+        # === 5. ЗОВНІШНЯ МЕЖА (ЗРІСТ H) ===
+        # Кількість вершин = Зріст / 10
+        # 170 см = 17 вершин
+        border_freq = int(H / 10) 
+        
+        r_border_base = max_r_rose + 3.5 * SCALE
+        
+        # Форма шипів залежить від статі, а частота від зросту
+        p_val = 0.5 if G == 1 else 1.5 
+        
+        # Формула межі
+        crown_shape = (np.abs(np.sin(border_freq * t)))**p_val 
+        r_border = r_border_base + (1.0 * SCALE * crown_shape)
+        
+        ax.plot(t, r_border, color=selected_cmap(0.8), linewidth=s["lw"]*1.5, alpha=0.9)
+
+        # Фіксація
+        ax.set_ylim(0, 1.45) 
+        ax.set_axis_off()
+        return fig
+
+    # ВІДОБРАЖЕННЯ
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+    with col2:
+        fig = generate_mandala()
+        st.pyplot(fig)
+        
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", facecolor='black', dpi=300)
+        st.download_button("📥 Завантажити PNG", buf.getvalue(), "mandala.png", "image/png")
