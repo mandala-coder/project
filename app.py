@@ -2,137 +2,127 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
+from scipy.interpolate import make_interp_spline
 import io
 import time
 
-# 1. НАЛАШТУВАННЯ СТОРІНКИ
-st.set_page_config(page_title="Мандала У-СІН 2.0", layout="wide")
+# 1. КОНФІГУРАЦІЯ
+st.set_page_config(page_title="Мандала У-СІН", layout="wide")
 
-st.title("🎨 Системна мандала: Психоматриця та У-СІН")
-st.write("### Глибока візуалізація біоритмів та енергетичного балансу")
-st.markdown("---")
+# 2. ЛОГІКА У-СІН (Послідовність Творення)
+# Дерево -> Вогонь -> Земля -> Метал -> Вода
+ELEMENTS = ["Дерево", "Вогонь", "Земля", "Метал", "Вода"]
+ELEMENT_COLORS = ["#2ecc71", "#e74c3c", "#f1c40f", "#ecf0f1", "#3498db"]
 
-# 2. ПАНЕЛЬ КЕРУВАННЯ
-st.sidebar.header("📋 Персональні дані")
+def get_wuxing_data(day, month):
+    # Математичний розподіл: кожен елемент отримує вагу на основі залишку від ділення
+    base_idx = (day + month) % 5
+    values = [1.0] * 5
+    values[base_idx] = 1.8  # Акцентний елемент
+    values[(base_idx + 1) % 5] = 1.4  # Підтримуючий елемент
+    return values
+
+# 3. ПАНЕЛЬ КЕРУВАННЯ
+st.sidebar.header("📥 Вхідні дані")
 with st.sidebar:
-    # Блок 1: Колірна гама
-    eye_choice = st.selectbox("Колір очей (Палітра)", options=[1, 2, 3, 4], 
-                              format_func=lambda x: {1:"Блакитні (Winter)", 2:"Зелені (Summer)", 3:"Карі (Autumn)", 4:"Янтарні (Spring)"}[x])
-    
-    # Блок 2: Форма межі
-    G = st.radio("Стать (Геометрія межі)", options=[1, -1], format_func=lambda x: "Чоловіча (Гостра)" if x == 1 else "Жіноча (М'яка)")
-    
+    eye_color = st.selectbox("Колір очей", [1, 2, 3, 4], 
+                             format_func=lambda x: {1:"Блакитні", 2:"Зелені", 3:"Карі", 4:"Янтарні"}[x])
+    G = st.radio("Стать", [1, -1], format_func=lambda x: "Чоловіча" if x == 1 else "Жіноча")
     st.markdown("---")
-    d = st.number_input("День народження", 1, 31, 15)
-    n = st.number_input("Місяць народження", 1, 12, 6)
-    
+    d = st.number_input("День", 1, 31, 12)
+    m = st.number_input("Місяць", 1, 12, 5)
+    age = st.slider("Вік", 1, 100, 30)
     st.markdown("---")
-    A = st.slider("Вік", 1, 100, 45)
-    T = st.slider("Енергія (Товщина ліній)", 1, 10, 5)
-    E = st.slider("Впевненість (Яскравість)", 1, 10, 8)
-    
-    run_anim = st.checkbox("🌀 Запустити 'Живе дихання'", value=True)
+    run_anim = st.checkbox("🌀 Жива мандала", value=True)
 
-# 3. РОЗРАХУНОК СТИХІЙ У-СІН
-def calculate_wuxing(day, month, energy_val):
-    base = (day + month) % 5
-    strengths = [1.2, 1.2, 1.2, 1.2, 1.2] # Базовий баланс
-    for i in range(5):
-        strengths[(base + i) % 5] += (energy_val / 8.0) * np.sin(i)
-    return strengths
-
-# 4. ГЕНЕРАТОР МАНДАЛИ
-def generate_advanced_mandala(phase=0):
-    w_data = calculate_wuxing(d, n, T)
+# 4. ГЕНЕРАТОР
+def generate_mandala(phase=0):
+    w_values = get_wuxing_data(d, m)
     
-    # Налаштування стилю
-    selected_cmap = {1: cm.winter, 2: cm.summer, 3: cm.autumn, 4: cm.spring}.get(eye_choice, cm.plasma)
-    line_thickness = 1.5 + (T / 2.0) # Залежність від енергії
-    brightness = 0.4 + (E / 20.0)    # Залежність від впевненості
+    # Налаштування стилю (однакова товщина для всіх ліній)
+    LW = 2.0 
+    cmap = {1: cm.winter, 2: cm.summer, 3: cm.autumn, 4: cm.spring}[eye_color]
     
     fig = plt.figure(figsize=(10, 10), facecolor='black')
     ax = plt.subplot(111, projection='polar')
     ax.set_facecolor('black')
     
-    t = np.linspace(0, 2 * np.pi, 1000)
+    # --- 1. ПЛАВНИЙ П'ЯТИКУТНИК (Ядро У-СІН) ---
+    # Використовуємо інтерполяцію для згладжування кутів
+    angles = np.linspace(0, 2*np.pi, 6)
+    r_vals = w_values + [w_values[0]]
     
-    # --- 1. РАДАР-ГРАФ У-СІН (Центр) ---
-    angles = np.linspace(0, 2 * np.pi, 6)
-    values = w_data + [w_data[0]]
-    ax.fill(angles, values, color=selected_cmap(0.8), alpha=0.3)
-    ax.plot(angles, values, color=selected_cmap(0.9), lw=line_thickness*1.5, marker='o', markersize=8)
-
-    # --- 2. БІОРИТМИ (Яскраві хвилі) ---
-    for i, strength in enumerate(w_data):
-        omega = (i + 1) * 0.5
-        phi = phase + (i * np.pi / 3)
-        r_wave = 2.2 + (0.4 * np.sin(omega * t + phi) * strength)
-        ax.plot(t, np.full_like(t, r_wave), alpha=brightness, color=selected_cmap(i/5), lw=line_thickness * 0.7)
-
-    # --- 3. СПІРАЛЬ РОЗВИТКУ (Золотий перетин) ---
-    phi_const = (1 + 5**0.5) / 2
-    b_growth = np.log(phi_const) / (np.pi / 2)
-    indices = np.arange(1, A + 1)
-    theta_fib = indices * 0.5 + phase * 0.05
-    r_fib = 0.25 * np.exp(b_growth * theta_fib * 0.08)
-    ax.scatter(theta_fib, r_fib, s=T*15, c=indices, cmap=selected_cmap, alpha=0.9, edgecolors='white', lw=0.5)
-
-    # --- 4. МЕЖА (Залежність від статі G) ---
-    # Чоловіча (G=1) -> p=0.5 (гостра), Жіноча (G=-1) -> p=1.5 (м'яка)
-    p_shape = 0.5 if G == 1 else 1.5
-    N_peaks = int(10 + T) # Кількість зубців залежить від енергії
+    # Створюємо плавну криву через вершини
+    smooth_angles = np.linspace(0, 2*np.pi, 200)
+    # Проста синусоїдальна інтерполяція для м'якості
+    r_smooth = np.interp(smooth_angles, angles, r_vals) 
+    # Додаткове згладжування для ефекту "пелюстки"
+    r_mandala = r_smooth + 0.1 * np.sin(5 * smooth_angles) 
     
-    breath = 1.0 + 0.05 * np.sin(phase)
-    r_border_base = 4.2
-    crown = (np.abs(np.sin(N_peaks * t)))**p_shape
-    r_border = r_border_base + (0.6 * crown * breath)
-    
-    ax.plot(t, r_border, color=selected_cmap(0.95), lw=line_thickness * 1.2, alpha=0.9)
-    ax.fill(t, r_border, color=selected_cmap(0.5), alpha=0.1)
+    ax.plot(smooth_angles, r_mandala, color='white', lw=LW, alpha=0.8)
+    ax.fill(smooth_angles, r_mandala, color=cmap(0.5), alpha=0.2)
 
-    ax.set_ylim(0, 5.5)
+    # --- 2. БІОРИТМИ (Хвилі життя) ---
+    t = np.linspace(0, 2*np.pi, 500)
+    for i, val in enumerate(w_values):
+        # Кожна стихія — окрема гармоніка
+        r_wave = 2.5 + 0.3 * np.sin((i+1)*t + phase)
+        ax.plot(t, r_wave, color=cmap(i/5), lw=LW, alpha=0.6)
+
+    # --- 3. СПІРАЛЬ ФЕРМА (Досвід) ---
+    indices = np.arange(1, age + 1)
+    phi_gold = 2.39996 # Золотий кут
+    theta_f = indices * phi_gold + phase * 0.05
+    r_f = 0.15 * np.sqrt(indices)
+    ax.scatter(theta_f, r_f, s=50, color='white', edgecolors=cmap(0.3), alpha=0.8)
+
+    # --- 4. МЕЖА (Стать) ---
+    p = 0.6 if G == 1 else 1.4
+    N = 12
+    r_border = 4.0 + 0.4 * (np.abs(np.sin(N * t)))**p
+    ax.plot(t, r_border, color=cmap(0.9), lw=LW)
+
+    ax.set_ylim(0, 5)
     ax.set_axis_off()
     return fig
 
-# 5. ВІДОБРАЖЕННЯ
-tab1, tab2 = st.tabs(["🚀 Генератор У-СІН", "📜 Математика"])
+# 5. ВІДОБРАЖЕННЯ ТА МАТЕМАТИЧНЕ ОБҐРУНТУВАННЯ
+tab1, tab2 = st.tabs(["✨ Мандала", "📐 Математичне обґрунтування"])
 
 with tab1:
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.write("#### Характеристики")
-        
-        # 1. Визначаємо назву стилю заздалегідь
-        if G == 1:
-            style_name = "Неоновий зигзаг"
-        else:
-            style_name = "М'яка хвиля"
-            
-        # 2. Тепер просто виводимо змінні без складних конструкцій всередині {}
-        st.write(f"**Стиль:** {style_name}")
-        st.write(f"**Колір:** Palette {eye_choice}")
-        
-        st.markdown("---")
-        st.caption("Ця мандала синтезує ваші біоритми. Товщина ліній прямо пропорційна вашій життєвій енергії (T).")
-
-    with col2:
-        placeholder = st.empty()
-        if run_anim:
-            for i in range(150):
-                fig = generate_advanced_mandala(phase=i * 0.1)
-                placeholder.pyplot(fig)
-                plt.close(fig)
-                time.sleep(0.04)
-        else:
-            fig = generate_advanced_mandala(phase=0)
+    placeholder = st.empty()
+    if run_anim:
+        for i in range(100):
+            fig = generate_mandala(phase=i*0.1)
             placeholder.pyplot(fig)
+            plt.close(fig)
+            time.sleep(0.05)
+    else:
+        st.pyplot(generate_mandala())
 
 with tab2:
-    st.header("Математика системної мандали 2.0")
-    st.write("Ми поєднали психоматрицю з класичною геометрією:")
+    st.header("Математична модель особистості")
     
-    st.latex(r"r_{border} = R_{base} + A \cdot |\sin(N \cdot \theta)|^p")
-    st.write(f"Де показник $p = {0.5 if G==1 else 1.5}$ (визначено статтю).")
+    # Таблиця У-СІН
+    st.subheader("1. Послідовність У-СІН")
+    st.table({
+        "Стихія": ELEMENTS,
+        "Логіка": ["Народження, ріст", "Активність, пік", "Стабільність, баланс", "Стиснення, досвід", "Спокій, ресурс"],
+        "Математичний індекс": [0, 1, 2, 3, 4]
+    })
+
+    st.subheader("2. Аналіз кривих")
     
-    st.latex(r"y(t) = \text{Energy} \cdot \sin(\omega t + \phi)")
-    st.write("Колірна гама базується на картах: Winter, Summer, Autumn, Spring.")
+    st.markdown("""
+    | Елемент | Формула | Вхідні дані |
+    | :--- | :--- | :--- |
+    | **Ядро (Згладжений п'ятикутник)** | $r(\theta) = f_{spline}(w_i)$ | День + Місяць народження |
+    | **Біоритми (Синусоїди)** | $r = R + A \cdot \sin(\omega t + \phi)$ | Послідовність стихій |
+    | **Поле досвіду (Спіраль Ферма)** | $r = c\sqrt{k}, \theta = k \cdot \psi$ | Вік ($A$) |
+    | **Захисний контур (Епіциклоїда)** | $r = R + |\sin(N\theta)|^p$ | Стать ($G$) |
+    """)
+
+    st.latex(r"r_{total} = \sum_{i=1}^{5} \text{Element}_i + \text{Gender\_Shape}(G)")
+    st.write("**Геометричний сенс:**")
+    st.write("- **Згладжування:** Використано лінійну інтерполяцію значень У-СІН з накладанням високої гармоніки для м'якості.")
+    st.write("- **Стать ($G$):** Показник степеня $p$ змінює кривизну межі: гострі вершини для чоловічої енергії ($p < 1$) та закруглені для жіночої ($p > 1$).")
