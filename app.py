@@ -253,7 +253,7 @@ with tab1:
         if run_anim:
             # Цикл анімації
             for i in range(200):
-                fig = generate_mandala(phase=i * 0.6)
+                fig = generate_mandala(phase=i * 0.8)
                 placeholder.pyplot(fig)
                 plt.close(fig) 
                 time.sleep(0.05)
