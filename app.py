@@ -199,7 +199,7 @@ with tab1:
 
         for i in range(1, A + 1):
             theta = i * golden_angle * G + (phase / 100)
-            r = max_r_rose + spacing * np.sqrt(i) * 3.5
+            r = max_r_rose + spacing * np.sqrt(i) * 1.5
             
             points_theta.append(theta)
             points_r.append(r)
