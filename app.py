@@ -81,6 +81,7 @@ with tab2:
     * **$T$ (Енергія)** — визначає діаметр кожної точки.
     * Чим вищий рівень енергії, тим "помітніші" та значущіші роки на малюнку (круги стають більшими).
     """)
+   
     # --- 6. РАДАР ---
     st.subheader("6. Сітка")
     st.write("Навколо квітки розгортається полярна сітка координат, схожа на карту світу.")
@@ -103,8 +104,8 @@ with tab2:
         * Для дівчат константа **$p = 1.5$** (піднесення до степеня) - плавні хвилі.
     """)
 
-    # --- 7. ТЕМПЕРАМЕНТ ---
-    st.subheader("7. Графічна фізика")
+    # --- 8. ТЕМПЕРАМЕНТ ---
+    st.subheader("8. Графічна фізика")
     st.write("Темперамент визначає 'вагу' та 'прозорість' ліній:")
     st.write("""
     * **Холерик:** Максимальна товщина, повна непрозорість.
@@ -181,17 +182,13 @@ with tab1:
         ax.fill(t, r_rose, color=selected_cmap(0.3), alpha=0.3)
         ax.plot(t, r_rose, color=selected_cmap(0.4), linewidth=s["lw"], alpha=s["alpha"])
 
-        # === 4. НАСИЧЕНА СІТКА (ЕНЕРГІЯ T) ===
+       # === 4. НАСИЧЕНА СІТКА (ЕНЕРГІЯ T) ===
         max_r_rose = r_rose.max()
-     
-        # 1. Визначаємо крок (відстань) між кільцями
-        step = 0.6 * SCALE
         
-        # 2. Визначаємо, де закінчується сітка
-        grid_width = T * step
-        r_grid_end = max_r_rose + grid_width
-     
-        # Радіальні промені
+        # Фіксована ширина сітки (4.0 одиниці масштабу)
+        r_grid_end = max_r_rose + 4.0 * SCALE 
+        
+        # Радіальні промені (залежать від T)
         num_rays = int(T * 4) + 4
         for i in range(num_rays):
             angle = (2 * np.pi / num_rays) * i + (phase / 50) 
@@ -201,8 +198,8 @@ with tab1:
                     alpha=s["alpha"] * 0.7,  
                     linestyle="-")
 
-        # Поперечні кільця
-        r_ticks = np.arange(max_r_rose, r_grid_end, step)
+        # Поперечні кільця (СТАНДАРТНИЙ КРОК 0.6)
+        r_ticks = np.arange(max_r_rose, r_grid_end, 0.6 * SCALE)
         for r_tick in r_ticks:
             ax.plot(t, np.full_like(t, r_tick), 
                     color=selected_cmap(0.5), 
