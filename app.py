@@ -286,7 +286,8 @@ with tab1:
                 color=selected_cmap(0.9), 
                 linewidth=s["lw"] * 1.5,
                 alpha=s["alpha"])
-
+    return fig
+    
     # ВІДОБРАЖЕННЯ
     col1, col2 = st.columns([1, 2])
     
