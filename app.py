@@ -82,7 +82,7 @@ with tab2:
     * Чим вищий рівень енергії, тим "помітніші" та значущіші роки на малюнку (круги стають більшими).
     """)
     # --- 6. РАДАР ---
-    st.subheader("6. Енергетична сітка")
+    st.subheader("6. Сітка")
     st.write("Навколо квітки розгортається полярна сітка координат, схожа на карту світу.")
     st.write("**А. Промені:**")
     st.write("Це лінії напряму дії. Їх кількість залежить від **Енергії ($T$)**.")
@@ -183,8 +183,14 @@ with tab1:
 
         # === 4. НАСИЧЕНА СІТКА (ЕНЕРГІЯ T) ===
         max_r_rose = r_rose.max()
-        r_grid_end = max_r_rose + 4.0 * SCALE 
+     
+        # 1. Визначаємо крок (відстань) між кільцями
+        step = 0.6 * SCALE
         
+        # 2. Визначаємо, де закінчується сітка
+        grid_width = T * step
+        r_grid_end = max_r_rose + grid_width
+     
         # Радіальні промені
         num_rays = int(T * 4) + 4
         for i in range(num_rays):
@@ -196,7 +202,7 @@ with tab1:
                     linestyle="-")
 
         # Поперечні кільця
-        r_ticks = np.arange(max_r_rose, r_grid_end, 0.6 * SCALE)
+        r_ticks = np.arange(max_r_rose, r_grid_end, step)
         for r_tick in r_ticks:
             ax.plot(t, np.full_like(t, r_tick), 
                     color=selected_cmap(0.5), 
