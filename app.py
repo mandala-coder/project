@@ -234,8 +234,8 @@ with tab1:
 
         # === 6. МЕЖА ===
         # Визначаємо базу для малювання межі (щоб вона не налізала на інші елементи)
-        max_dist = max(points_r) if points_r else r_grid_end
-        base_radius = max(r_grid_end, max_dist + 0.8 * SCALE)
+        max_dist = max(points_r) if points_r else r_grid_end
+        base_radius = max(r_grid_end, max_dist + 0.8 * SCALE)
 
         # 1. Кількість хвиль (залежить від зросту H)
         k_waves = int(H / 10) 
