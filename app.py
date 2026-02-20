@@ -239,17 +239,17 @@ with tab1:
 
         # 1. Кількість хвиль (залежить від зросту H)
         k_waves = int(H / 10) 
-        
+        
         # 2. Амплітуда / висота хвилі (залежить від статі G)
         if G == 1: 
             A_wave = 0.6 * SCALE  # Більш виражені, високі хвилі (чоловічий)
         else:      
             A_wave = 0.2 * SCALE  # М'які, плавні хвилі (жіночий)
-
-        # 3. Формула межі: Базове коло + Хвиля (додаємо phase/10 для повільного обертання)
-        r_boundary = base_radius + A_wave * np.cos(k_waves * t + phase/10)
+        
+        # 3. Формула межі: Базове коло + Хвиля (додаємо phase/10 для повільного обертання)
+        r_boundary = base_radius + A_wave * np.cos(k_waves * t + phase/10)
         
-        # 4. Малюємо межу
+        # 4. Малюємо межу
         ax.plot(t, r_boundary * breath, 
                 color=selected_cmap(0.9), 
                 linewidth=s["lw"] * 1.5,
