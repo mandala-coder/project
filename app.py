@@ -248,12 +248,12 @@ with tab1:
         
         # 3. Формула межі: Базове коло + Хвиля (додаємо phase/10 для повільного обертання)
         r_boundary = base_radius + A_wave * np.cos(k_waves * t + phase/10)
-        
+        
         # 4. Малюємо межу
-        ax.plot(t, r_boundary * breath, 
-                color=selected_cmap(0.9), 
-                linewidth=s["lw"] * 1.5,
-                alpha=s["alpha"])
+        ax.plot(t, r_boundary * breath, 
+                color=selected_cmap(0.9), 
+                linewidth=s["lw"] * 1.5,
+                alpha=s["alpha"])
 
         # Фіксація
         ax.set_ylim(0, 1.5)
