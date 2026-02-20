@@ -233,7 +233,7 @@ with tab1:
                    alpha=s["alpha"], cmap=selected_cmap, edgecolors='none')
 
         # === 6. МЕЖА ===
-        # Визначаємо базу для малювання межі (щоб вона не налізала на інші елементи)
+        # Визначаємо базу для малювання межі (щоб вона не налізала на інші елементи)
         max_dist = max(points_r) if points_r else r_grid_end
         base_radius = max(r_grid_end, max_dist + 0.8 * SCALE)
 
