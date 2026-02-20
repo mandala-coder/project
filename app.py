@@ -237,11 +237,11 @@ with tab1:
         max_dist = max(points_r) if points_r else r_grid_end
         base_radius = max(r_grid_end, max_dist + 0.8 * SCALE)
 
-        # 1. Кількість хвиль (залежить від зросту H)
-        k_waves = int(H / 10) 
+        # 1. Кількість хвиль (залежить від зросту H)
+        k_waves = int(H / 10) 
         
-        # 2. Амплітуда / висота хвилі (залежить від статі G)
-        if G == 1: 
+        # 2. Амплітуда / висота хвилі (залежить від статі G)
+        if G == 1: 
             A_wave = 0.6 * SCALE  # Більш виражені, високі хвилі (чоловічий)
         else:      
             A_wave = 0.2 * SCALE  # М'які, плавні хвилі (жіночий)
