@@ -140,7 +140,7 @@ with tab1:
         G = st.radio("Стать", options=[1, -1], format_func=lambda x: "Чоловіча" if x == 1 else "Жіноча")
         temp = st.selectbox("Темперамент", options=["Сангвінік", "Холерик", "Флегматик", "Меланхолік"])
         eye_choice = st.selectbox("Колір очей", options=[1, 2, 3, 4], 
-                                  format_func=lambda x: {1:"Блакитні", 2:"Зелені", 3:"Карі", 4:"Янтарні"}[x])
+                                  format_func=lambda x: {1:"Блакитні", 2:"Зелені", 3:"Карі", 4:"Сірі"}[x])
 
     # ГЕНЕРАЦІЯ
     def generate_mandala(phase=0):
@@ -152,7 +152,7 @@ with tab1:
             "Меланхолік": {"lw": 1.0, "alpha": 0.7} 
         }
         s = style_map[temp]
-        selected_cmap = {1: cm.winter, 2: cm.summer, 3: cm.autumn, 4: cm.spring}.get(eye_choice, cm.plasma)
+        selected_cmap = {1: cm.winter, 2: cm.summer, 3: cm.autumn, 4: cm.bone}.get(eye_choice, cm.plasma)
         
         t = np.linspace(0, 2 * np.pi, 5000)
         fig = plt.figure(figsize=(10, 10), facecolor='black') # <--- ЗБІЛЬШИЛИ РОЗМІР ПОЛОТНА (8->10)
