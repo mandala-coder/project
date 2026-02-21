@@ -152,7 +152,7 @@ with tab1:
             "Меланхолік": {"lw": 1.0, "alpha": 0.7} 
         }
         s = style_map[temp]
-        selected_cmap = {1: cm.winter, 2: cm.summer, 3: cm.autumn, 4: cm.bone}.get(eye_choice, cm.plasma)
+        selected_cmap = {1: cm.winter, 2: cm.summer, 3: cm.autumn, 4: cm.gray}.get(eye_choice, cm.plasma)
         
         t = np.linspace(0, 2 * np.pi, 5000)
         fig = plt.figure(figsize=(10, 10), facecolor='black') # <--- ЗБІЛЬШИЛИ РОЗМІР ПОЛОТНА (8->10)
